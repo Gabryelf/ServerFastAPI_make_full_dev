@@ -21,11 +21,21 @@ def get_password_hash(password):
 
 def authenticate_user(db: Session, email: str, password: str):
     from .crud import get_user_by_email
+    print(f"🔐 Authenticating user: {email}")
+
     user = get_user_by_email(db, email)
     if not user:
+        print(f"❌ User not found: {email}")
         return False
-    if not verify_password(password, user.hashed_password):
+
+    print(f"✅ User found: {user.email}, checking password...")
+    password_valid = verify_password(password, user.hashed_password)
+
+    if not password_valid:
+        print(f"❌ Invalid password for user: {email}")
         return False
+
+    print(f"✅ Authentication successful for user: {email}")
     return user
 
 
@@ -36,6 +46,7 @@ def create_access_token(user):
     to_encode = {"sub": str(user.id), "email": user.email, "role": user.role}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
+    print(f"🔑 Created access token for user: {user.email}, role: {user.role}")
     return {"access_token": encoded_jwt, "token_type": "bearer"}
 
 
@@ -46,15 +57,27 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
     try:
+        print(f"🔍 Validating token...")
         payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: int = int(payload.get("sub"))
+        email: str = payload.get("email")
+        role: str = payload.get("role")
+
+        print(f"📋 Token payload - user_id: {user_id}, email: {email}, role: {role}")
+
         if user_id is None:
             raise credentials_exception
-    except JWTError:
-        raise credentials_exception
 
-    user = get_user(db, user_id=user_id)
-    if user is None:
+        user = get_user(db, user_id=user_id)
+        if user is None:
+            print(f"❌ User not found in database: {user_id}")
+            raise credentials_exception
+
+        print(f"✅ User validated: {user.email}")
+        return user
+
+    except JWTError as e:
+        print(f"❌ JWT Error: {e}")
         raise credentials_exception
-    return user

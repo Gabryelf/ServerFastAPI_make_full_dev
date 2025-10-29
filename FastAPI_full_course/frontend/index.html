@@ -3,87 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketplace</title>
+    <title>Marketplace - Главная</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
-    <div id="app">
+    <div class="container">
         <header>
-            <h1>Marketplace</h1>
-            <div id="auth-section">
-                <button id="login-btn" onclick="showLogin()">Вход</button>
-                <button id="register-btn" onclick="showRegister()">Регистрация</button>
-                <button id="logout-btn" style="display: none;" onclick="logout()">Выход</button>
-                <span id="user-info" style="display: none;"></span>
-            </div>
-        </header>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="index.html" class="nav-link">🛍️ Marketplace</a>
+        </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Главная</a>
+                <a href="products.html" class="nav-link">Все товары</a>
 
-        <main>
-            <!-- Auth Modals -->
-            <div id="login-modal" class="modal">
-                <div class="modal-content">
-                    <h2>Вход</h2>
-                    <form id="login-form">
-                        <input type="email" placeholder="Email" required>
-                        <input type="password" placeholder="Пароль" required>
-                        <button type="submit">Войти</button>
-                    </form>
-                    <button onclick="hideModals()">Отмена</button>
+            <!-- Ссылки для неавторизованных -->
+                <div id="auth-links">
+                <a href="login.html" class="btn btn-outline">Войти</a>
+                <a href="register.html" class="btn btn-primary">Регистрация</a>
+                </div>
+
+            <!-- Ссылки для авторизованных -->
+                <div id="user-links" style="display: none;">
+                <a href="dashboard.html" class="nav-link">Мой кабинет</a>
+                <span id="user-info" style="margin: 0 1rem; color: var(--text-light);"></span>
+                <button onclick="logout()" class="btn btn-outline">Выйти</button>
+                </div>
+
+            <!-- Ссылки для администраторов -->
+                <div id="admin-links" style="display: none;">
+                <a href="admin.html" class="nav-link">Админ панель</a>
                 </div>
             </div>
+        </nav>
+    </header>
 
-            <div id="register-modal" class="modal">
-                <div class="modal-content">
-                    <h2>Регистрация</h2>
-                    <form id="register-form">
-                        <input type="text" placeholder="Полное имя" required>
-                        <input type="email" placeholder="Email" required>
-                        <input type="password" placeholder="Пароль" required>
-                        <button type="submit">Зарегистрироваться</button>
-                    </form>
-                    <button onclick="hideModals()">Отмена</button>
+        <main class="hero-section">
+            <div class="hero-content">
+                <h2>Добро пожаловать в Marketplace!</h2>
+                <p>Платформа для покупки и продажи товаров. Создавайте свои объявления, находите интересные предложения от других пользователей.</p>
+
+                <div class="hero-features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Просмотр товаров</h3>
+                        <p>Смотрите все товары на платформе без регистрации</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <h3>Создание объявлений</h3>
+                        <p>Размещайте свои товары с фото и видео после регистрации</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Безопасная сделка</h3>
+                        <p>Надежная платформа для покупателей и продавцов</p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Product Creation Modal -->
-            <div id="create-product-modal" class="modal">
-                <div class="modal-content">
-                    <h2>Создать товар</h2>
-                    <form id="create-product-form">
-                        <input type="text" placeholder="Название товара" required>
-                        <textarea placeholder="Описание товара" required></textarea>
-                        <div>
-                            <label>Фотографии (до 5):</label>
-                            <input type="file" multiple accept="image/*" id="product-images">
-                        </div>
-                        <div>
-                            <label>Видео (до 2):</label>
-                            <input type="file" multiple accept="video/*" id="product-videos">
-                        </div>
-                        <button type="submit">Создать товар</button>
-                    </form>
-                    <button onclick="hideModals()">Отмена</button>
+                <div class="hero-actions">
+                    <a href="products.html" class="btn btn-large btn-primary">Смотреть все товары</a>
+                    <a href="register.html" class="btn btn-large btn-secondary">Начать продавать</a>
                 </div>
-            </div>
-
-            <!-- Controls -->
-            <div id="controls">
-                <button id="create-product-btn" style="display: none;" onclick="showCreateProduct()">Создать товар</button>
-                <button id="admin-panel-btn" style="display: none;" onclick="showAdminPanel()">Панель администратора</button>
-            </div>
-
-            <!-- Products List -->
-            <div id="products-container">
-                <h2>Товары</h2>
-                <div id="products-list"></div>
-            </div>
-
-            <!-- Admin Panel -->
-            <div id="admin-panel" style="display: none;">
-                <h2>Панель администратора</h2>
-                <div id="users-list"></div>
             </div>
         </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Marketplace. Все права защищены.</p>
+        </footer>
     </div>
 
     <script src="js/app.js"></script>

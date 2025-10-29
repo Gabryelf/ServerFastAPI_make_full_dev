@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой кабинет - Marketplace</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <a href="index.html" class="nav-link">🛍️ Marketplace</a>
+                </div>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link">Главная</a>
+                    <a href="products.html" class="nav-link">Все товары</a>
+                    <a href="dashboard.html" class="nav-link active">Мой кабинет</a>
+                    <div id="admin-links" style="display: none;">
+                        <a href="admin.html" class="nav-link">Админ панель</a>
+                    </div>
+                    <button onclick="logout()" class="btn btn-outline">Выйти</button>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div class="dashboard-header">
+                <h1>Мой кабинет</h1>
+                <p id="user-welcome">Загрузка...</p>
+            </div>
+
+            <div class="dashboard-actions">
+                <button onclick="showCreateProductModal()" class="btn btn-primary">
+                    📦 Добавить товар
+                </button>
+                <div id="admin-button-container" style="display: none; margin-left: 10px;">
+                    <a href="admin.html" class="btn btn-warning">👑 Панель администратора</a>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <h2>Мои товары</h2>
+                <div id="dashboard-content">
+                    <div class="loading">Загрузка ваших товаров...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно создания товара -->
+    <div id="create-product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Добавить товар</h2>
+                <button onclick="hideModal('create-product-modal')" class="btn-close">×</button>
+            </div>
+            <form id="create-product-form" class="modal-form">
+                <div class="form-group">
+                    <label for="product-name">Название товара</label>
+                    <input type="text" id="product-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-description">Описание товара</label>
+                    <textarea id="product-description" name="description" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Фотографии (до 5 штук)</label>
+                    <input type="file" id="product-images" multiple accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Видео (до 2 штук)</label>
+                    <input type="file" id="product-videos" multiple accept="video/*">
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="hideModal('create-product-modal')" class="btn btn-outline">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Создать товар
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Функции для dashboard
+        function showCreateProductModal() {
+            document.getElementById('create-product-modal').style.display = 'flex';
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Загрузка товаров после успешной авторизации
+        async function loadDashboardContent() {
+            console.log("🎯 Loading dashboard content...");
+
+            if (!currentUser) {
+                console.log("❌ No user for dashboard content");
+                return;
+            }
+
+            // Показываем кнопку админки если пользователь админ
+            if (currentUser.role === 'admin') {
+                document.getElementById('admin-button-container').style.display = 'inline-block';
+            }
+
+            // Загружаем товары
+            try {
+                const response = await fetch('http://localhost:8000/api/products/');
+                const products = await response.json();
+                const myProducts = products.filter(p => p.owner_id === currentUser.id);
+
+                const contentEl = document.getElementById('dashboard-content');
+
+                if (myProducts.length === 0) {
+                    contentEl.innerHTML = `
+                        <div class="empty-state">
+                            <h3>У вас пока нет товаров</h3>
+                            <p>Добавьте первый товар, чтобы начать продавать!</p>
+                            <button onclick="showCreateProductModal()" class="btn btn-primary">
+                                Добавить товар
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    contentEl.innerHTML = `
+                        <div class="products-grid">
+                            ${myProducts.map(product => `
+                                <div class="product-card">
+                                    <img src="http://localhost:8000${product.image_paths?.[0] || '/static/uploads/default-product.jpg'}"
+                                         alt="${product.name}" class="product-image">
+                                    <div class="product-info">
+                                        <h3 class="product-name">${product.name}</h3>
+                                        <p class="product-description">${product.description}</p>
+                                        <button onclick="deleteProduct(${product.id})" class="btn btn-outline btn-small">
+                                            Удалить
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Ошибка загрузки товаров</h3>
+                        <p>Попробуйте обновить страницу</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Удаление товара
+        async function deleteProduct(productId) {
+            if (!confirm('Удалить этот товар?')) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:8000/api/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    showMessage('Товар удален', 'success');
+                    loadDashboardContent();
+                } else {
+                    showMessage('Ошибка удаления товара', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage('Ошибка соединения', 'error');
+            }
+        }
+
+        // Обработчик формы создания товара
+        document.getElementById('create-product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('name', document.getElementById('product-name').value);
+            formData.append('description', document.getElementById('product-description').value);
+
+            const imagesInput = document.getElementById('product-images');
+            const videosInput = document.getElementById('product-videos');
+
+            for (let file of imagesInput.files) {
+                formData.append('images', file);
+            }
+
+            for (let file of videosInput.files) {
+                formData.append('videos', file);
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:8000/api/products/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    showMessage('Товар успешно создан!', 'success');
+                    hideModal('create-product-modal');
+                    document.getElementById('create-product-form').reset();
+                    loadDashboardContent();
+                } else {
+                    showMessage('Ошибка создания товара', 'error');
+                }
+            } catch (error) {
+                console.error('Create product error:', error);
+                showMessage('Ошибка соединения', 'error');
+            }
+        });
+
+        // Закрытие модального окна
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // После загрузки страницы загружаем контент
+        setTimeout(() => {
+            if (currentUser) {
+                loadDashboardContent();
+            }
+        }, 500);
+    </script>
+</body>
+</html>

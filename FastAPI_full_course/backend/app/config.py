@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # MySQL
     MYSQL_DB: str = "marketplace"
     MYSQL_USER: str = "root"
-    MYSQL_PASSWORD: str = "password"
+    MYSQL_PASSWORD: str = "sksmel544332"
     MYSQL_HOST: str = "localhost"
     MYSQL_PORT: str = "3306"
 
