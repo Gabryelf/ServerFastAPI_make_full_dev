@@ -1,0 +1,186 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+}
+
+header {
+    background: #35424a;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+#auth-section button {
+    margin-left: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #e8491d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-content h2 {
+    margin-bottom: 1rem;
+}
+
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.modal-content button {
+    padding: 0.5rem 1rem;
+    background: #35424a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+
+#controls {
+    margin-bottom: 2rem;
+}
+
+#controls button {
+    padding: 0.5rem 1rem;
+    background: #35424a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+
+.product-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.product-card h3 {
+    color: #35424a;
+    margin-bottom: 0.5rem;
+}
+
+.product-images {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.product-images img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 4px;
+}
+
+.product-videos {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.product-videos video {
+    max-width: 300px;
+    border-radius: 4px;
+}
+
+.product-actions {
+    margin-top: 1rem;
+}
+
+.product-actions button {
+    padding: 0.3rem 0.8rem;
+    margin-right: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background: #ffc107;
+    color: black;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.user-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-card button {
+    padding: 0.3rem 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.make-admin-btn {
+    background: #28a745;
+    color: white;
+}
+
+.delete-user-btn {
+    background: #dc3545;
+    color: white;
+}
