@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель - Marketplace</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <a href="index.html" class="nav-link">🛍️ Marketplace</a>
+                </div>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link">Главная</a>
+                    <a href="products.html" class="nav-link">Все товары</a>
+                    <a href="dashboard.html" class="nav-link">Мой кабинет</a>
+                    <a href="admin.html" class="nav-link active">Админ панель</a>
+                    <button onclick="logout()" class="btn btn-outline">Выйти</button>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div class="admin-header">
+                <h1>👑 Админ панель</h1>
+                <p>Управление пользователями и товарами</p>
+            </div>
+
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-users">0</div>
+                    <div class="stat-label">Всего пользователей</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-products">0</div>
+                    <div class="stat-label">Всего товаров</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-admins">0</div>
+                    <div class="stat-label">Администраторов</div>
+                </div>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="openTab('users-tab')">👥 Пользователи</button>
+                <button class="tab-btn" onclick="openTab('products-tab')">📦 Все товары</button>
+                <button class="tab-btn" onclick="openTab('reports-tab')">📊 Статистика</button>
+            </div>
+
+            <!-- Вкладка пользователей -->
+            <div id="users-tab" class="tab-content active">
+                <div class="section-header">
+                    <h2>Управление пользователями</h2>
+                    <input type="text" id="user-search" placeholder="Поиск пользователей..." class="search-input">
+                </div>
+                <div class="users-list" id="users-list">
+                    <!-- Список пользователей будет здесь -->
+                </div>
+            </div>
+
+            <!-- Вкладка всех товаров -->
+            <div id="products-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Все товары на платформе</h2>
+                    <input type="text" id="product-search" placeholder="Поиск товаров..." class="search-input">
+                </div>
+                <div class="products-grid" id="admin-products-grid">
+                    <!-- Все товары будут здесь -->
+                </div>
+            </div>
+
+            <!-- Вкладка статистики -->
+            <div id="reports-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Статистика платформы</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card large">
+                        <h3>Активность пользователей</h3>
+                        <div id="user-activity-chart" class="chart-placeholder">
+                            <p>График активности будет здесь</p>
+                        </div>
+                    </div>
+                    <div class="stat-card large">
+                        <h3>Распределение товаров</h3>
+                        <div id="products-distribution-chart" class="chart-placeholder">
+                            <p>График распределения будет здесь</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Подтверждение действия</h2>
+                <button onclick="hideModal('confirm-modal')" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">Вы уверены, что хотите выполнить это действие?</p>
+            </div>
+            <div class="form-actions">
+                <button onclick="hideModal('confirm-modal')" class="btn btn-outline">Отмена</button>
+                <button id="confirm-action" class="btn btn-danger">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

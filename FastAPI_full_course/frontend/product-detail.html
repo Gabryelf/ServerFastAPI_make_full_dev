@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Товар - Marketplace</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <a href="index.html" class="nav-link">🛍️ Marketplace</a>
+                </div>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link">Главная</a>
+                    <a href="products.html" class="nav-link">Все товары</a>
+                    <div id="auth-links">
+                        <a href="login.html" class="btn btn-outline">Войти</a>
+                        <a href="register.html" class="btn btn-primary">Регистрация</a>
+                    </div>
+                    <div id="user-links" style="display: none;">
+                        <a href="dashboard.html" class="nav-link">Мой кабинет</a>
+                        <button onclick="logout()" class="btn btn-outline">Выйти</button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div class="product-detail" id="product-detail">
+                <!-- Контент будет загружен через JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/products.js"></script>
+    <script>
+        // Загрузка деталей товара при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (productId) {
+                await loadProductDetail(productId);
+            } else {
+                window.location.href = 'products.html';
+            }
+        });
+    </script>
+</body>
+</html>

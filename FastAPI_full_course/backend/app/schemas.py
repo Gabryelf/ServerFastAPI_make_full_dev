@@ -5,7 +5,6 @@ from typing import List
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
-    role: str
 
 
 class UserCreate(BaseModel):
@@ -21,6 +20,7 @@ class UserLogin(BaseModel):
 
 class User(UserBase):
     id: int
+    role: str
 
     class Config:
         from_attributes = True

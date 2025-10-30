@@ -1,0 +1,56 @@
+// Загрузка моих товаров
+async function loadMyProducts() {
+    const grid = document.getElementById('my-products-grid');
+    const emptyState = document.getElementById('my-products-empty');
+
+    if (!currentUser) {
+        console.log("No user for loading products");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/products/`);
+        const allProducts = await response.json();
+        const myProducts = allProducts.filter(product => product.owner_id === currentUser.id);
+
+        if (myProducts.length === 0) {
+            emptyState.style.display = 'block';
+            grid.style.display = 'none';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        grid.style.display = 'grid';
+        grid.innerHTML = '';
+
+        myProducts.forEach(product => {
+            const firstImage = product.image_paths && product.image_paths.length > 0 
+                ? product.image_paths[0] 
+                : '/static/uploads/default-product.jpg';
+            
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            productCard.onclick = () => viewProductDetail(product.id);
+
+            productCard.innerHTML = `
+                <img src="${API_BASE}${firstImage}" alt="${product.name}" class="product-image"
+                     onerror="this.src='${API_BASE}/static/uploads/default-product.jpg'">
+                <div class="product-info">
+                    <h3 class="product-name">${product.name}</h3>
+                    <p class="product-description">${product.description}</p>
+                    <div class="product-actions">
+                        <button onclick="event.stopPropagation(); deleteProduct(${product.id})" 
+                                class="btn btn-outline btn-small">
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            grid.appendChild(productCard);
+        });
+
+    } catch (error) {
+        console.error('Load my products error:', error);
+    }
+}

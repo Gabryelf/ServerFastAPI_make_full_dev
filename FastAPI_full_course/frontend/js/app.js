@@ -1,11 +1,118 @@
 const API_BASE = 'http://localhost:8000';
 let currentUser = null;
-let token = null;
+let token = localStorage.getItem('token');
 
-// Auth functions
-async function login(email, password) {
+console.log("=== APP INIT ===");
+console.log("Initial token:", token);
+
+// Основная функция загрузки пользователя
+async function loadCurrentUser() {
+    console.log("🔄 Loading current user...");
+
+    token = localStorage.getItem('token');
+    console.log("Token from localStorage:", token);
+
+    if (!token) {
+        console.log("❌ No token found");
+        currentUser = null;
+        return null;
+    }
+
     try {
-        const response = await fetch(`${API_BASE}/login`, {
+        const response = await fetch(`${API_BASE}/api/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        console.log("User API response status:", response.status);
+
+        if (response.ok) {
+            currentUser = await response.json();
+            console.log("✅ Current user loaded:", currentUser);
+            return currentUser;
+        } else {
+            console.log("❌ Failed to load user, removing invalid token");
+            localStorage.removeItem('token');
+            token = null;
+            currentUser = null;
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ Load user error:', error);
+        localStorage.removeItem('token');
+        token = null;
+        currentUser = null;
+        return null;
+    }
+}
+
+// Обновление навигации
+function updateNavigation() {
+    console.log("🔄 Updating navigation...");
+
+    const authLinks = document.getElementById('auth-links');
+    const userLinks = document.getElementById('user-links');
+    const adminLinks = document.getElementById('admin-links');
+
+    if (currentUser) {
+        console.log("✅ User is authenticated, showing user links");
+        if (authLinks) authLinks.style.display = 'none';
+        if (userLinks) userLinks.style.display = 'flex';
+
+        if (adminLinks && currentUser.role === 'admin') {
+            adminLinks.style.display = 'block';
+            console.log("👑 Admin links enabled");
+        }
+
+        const welcomeEl = document.getElementById('user-welcome');
+        if (welcomeEl) {
+            welcomeEl.textContent = `Добро пожаловать, ${currentUser.full_name}!`;
+        }
+    } else {
+        console.log("❌ User is not authenticated, showing auth links");
+        if (authLinks) authLinks.style.display = 'flex';
+        if (userLinks) userLinks.style.display = 'none';
+        if (adminLinks) adminLinks.style.display = 'none';
+    }
+}
+
+// Выход из системы
+function logout() {
+    console.log("🚪 Logging out...");
+    localStorage.removeItem('token');
+    token = null;
+    currentUser = null;
+    showMessage('Вы вышли из системы', 'success');
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 1000);
+}
+
+// Показать сообщение
+function showMessage(message, type = 'success') {
+    console.log(`Message (${type}): ${message}`);
+
+    const messageEl = document.getElementById('auth-message') || document.getElementById('message');
+    if (messageEl) {
+        messageEl.textContent = message;
+        messageEl.className = `message ${type}`;
+        messageEl.classList.remove('hidden');
+
+        setTimeout(() => {
+            messageEl.classList.add('hidden');
+        }, 5000);
+    } else {
+        alert(`${type === 'success' ? '✅' : '❌'} ${message}`);
+    }
+}
+
+// Функция для входа
+async function loginUser(email, password) {
+    console.log("🔐 Logging in user:", email);
+
+    try {
+        const response = await fetch(`${API_BASE}/api/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -13,320 +120,212 @@ async function login(email, password) {
             body: JSON.stringify({ email, password }),
         });
 
+        console.log("Login response status:", response.status);
+
         if (response.ok) {
-            const data = await response.json();
-            token = data.access_token;
-            localStorage.setItem('token', token);
-            await loadCurrentUser();
-            hideModals();
-            loadProducts();
-            updateUI();
+            const loginData = await response.json();
+
+            localStorage.setItem('token', loginData.access_token);
+            token = loginData.access_token;
+            console.log("✅ Login successful, token saved");
+
+            showMessage('Вход выполнен! Перенаправляем...', 'success');
+
+            // Сразу редирект, не ждем загрузку пользователя
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+
+            return true;
         } else {
-            alert('Ошибка входа');
+            const errorData = await response.json();
+            console.error("❌ Login failed:", errorData);
+            showMessage(errorData.detail || 'Ошибка входа', 'error');
+            return false;
         }
     } catch (error) {
-        console.error('Login error:', error);
-        alert('Ошибка входа');
+        console.error('❌ Login connection error:', error);
+        showMessage('Ошибка соединения', 'error');
+        return false;
     }
 }
 
-async function register(fullName, email, password) {
+// Функция для регистрации
+async function registerUser(fullName, email, password) {
+    console.log("👤 Registering user:", email);
+
     try {
-        const response = await fetch(`${API_BASE}/register`, {
+        const response = await fetch(`${API_BASE}/api/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ full_name: fullName, email, password }),
+            body: JSON.stringify({
+                full_name: fullName,
+                email,
+                password
+            }),
         });
 
-        if (response.ok) {
-            alert('Регистрация успешна! Теперь войдите в систему.');
-            hideModals();
-            showLogin();
-        } else {
-            const error = await response.json();
-            alert(error.detail || 'Ошибка регистрации');
-        }
-    } catch (error) {
-        console.error('Register error:', error);
-        alert('Ошибка регистрации');
-    }
-}
-
-async function loadCurrentUser() {
-    token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-        const response = await fetch(`${API_BASE}/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        console.log("Register response status:", response.status);
 
         if (response.ok) {
-            currentUser = await response.json();
+            console.log("✅ Registration successful");
+            showMessage('Регистрация успешна! Выполняется вход...', 'success');
+
+            // Сразу логинимся после регистрации
+            const loginSuccess = await loginUser(email, password);
+            return loginSuccess;
         } else {
-            localStorage.removeItem('token');
-            token = null;
+            const errorData = await response.json();
+            console.error("❌ Registration failed:", errorData);
+            showMessage(errorData.detail || 'Ошибка регистрации', 'error');
+            return false;
         }
     } catch (error) {
-        console.error('Load user error:', error);
-        localStorage.removeItem('token');
-        token = null;
+        console.error('❌ Register connection error:', error);
+        showMessage('Ошибка соединения', 'error');
+        return false;
     }
 }
 
-function logout() {
-    localStorage.removeItem('token');
-    token = null;
-    currentUser = null;
-    updateUI();
-    loadProducts();
-}
+// Проверка авторизации для защищенных страниц
+async function checkProtectedPageAccess() {
+    console.log("🔐 Checking protected page access...");
+    console.log("Current page:", window.location.pathname);
 
-// Product functions
-async function loadProducts() {
-    try {
-        const response = await fetch(`${API_BASE}/products/`);
-        const products = await response.json();
-        displayProducts(products);
-    } catch (error) {
-        console.error('Load products error:', error);
+    // Только для защищенных страниц
+    if (window.location.pathname.includes('dashboard.html') ||
+        window.location.pathname.includes('admin.html')) {
+
+        console.log("🛡️ This is a protected page, checking auth...");
+
+        // Сначала пытаемся загрузить пользователя
+        const user = await loadCurrentUser();
+
+        if (!user) {
+            console.log("❌ No user found, redirecting to login");
+            showMessage('Для доступа необходимо войти в систему', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+            return false;
+        }
+
+        console.log("✅ Access granted for protected page");
+        return true;
     }
+
+    return true;
 }
 
-function displayProducts(products) {
-    const container = document.getElementById('products-list');
-    container.innerHTML = '';
+// Проверка редиректа для уже авторизованных пользователей
+async function checkAuthRedirect() {
+    console.log("🔄 Checking auth redirect...");
 
-    products.forEach(product => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-
-        let imagesHTML = '';
-        if (product.image_paths && product.image_paths.length > 0) {
-            imagesHTML = `
-                <div class="product-images">
-                    ${product.image_paths.map(path =>
-                        `<img src="${API_BASE}${path}" alt="Product image">`
-                    ).join('')}
-                </div>
-            `;
-        }
-
-        let videosHTML = '';
-        if (product.video_paths && product.video_paths.length > 0) {
-            videosHTML = `
-                <div class="product-videos">
-                    ${product.video_paths.map(path =>
-                        `<video controls>
-                            <source src="${API_BASE}${path}" type="video/mp4">
-                            Ваш браузер не поддерживает видео.
-                        </video>`
-                    ).join('')}
-                </div>
-            `;
-        }
-
-        let actionsHTML = '';
-        if (currentUser && (currentUser.role === 'admin' || currentUser.id === product.owner_id)) {
-            actionsHTML = `
-                <div class="product-actions">
-                    <button class="edit-btn" onclick="editProduct(${product.id})">Редактировать</button>
-                    <button class="delete-btn" onclick="deleteProduct(${product.id})">Удалить</button>
-                </div>
-            `;
-        }
-
-        productCard.innerHTML = `
-            <h3>${product.name}</h3>
-            <p>${product.description}</p>
-            ${imagesHTML}
-            ${videosHTML}
-            ${actionsHTML}
-        `;
-
-        container.appendChild(productCard);
-    });
-}
-
-async function createProduct(formData) {
-    try {
-        const response = await fetch(`${API_BASE}/products/`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-        });
-
-        if (response.ok) {
-            hideModals();
-            loadProducts();
-        } else {
-            alert('Ошибка создания товара');
-        }
-    } catch (error) {
-        console.error('Create product error:', error);
-        alert('Ошибка создания товара');
+    // Если пользователь уже на dashboard, ничего не делаем
+    if (window.location.pathname.includes('dashboard.html') ||
+        window.location.pathname.includes('admin.html')) {
+        return;
     }
-}
 
-async function deleteProduct(productId) {
-    if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
-
-    try {
-        const response = await fetch(`${API_BASE}/products/${productId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (response.ok) {
-            loadProducts();
-        } else {
-            alert('Ошибка удаления товара');
-        }
-    } catch (error) {
-        console.error('Delete product error:', error);
-        alert('Ошибка удаления товара');
-    }
-}
-
-// Admin functions
-async function loadUsers() {
-    // In a real app, you'd have an endpoint to get all users
-    // For now, we'll just show a message
-    document.getElementById('users-list').innerHTML = '<p>Функционал управления пользователями будет реализован позже</p>';
-}
-
-// UI functions
-function showLogin() {
-    hideModals();
-    document.getElementById('login-modal').style.display = 'block';
-}
-
-function showRegister() {
-    hideModals();
-    document.getElementById('register-modal').style.display = 'block';
-}
-
-function showCreateProduct() {
-    hideModals();
-    document.getElementById('create-product-modal').style.display = 'block';
-}
-
-function showAdminPanel() {
-    document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('products-container').style.display = 'none';
-    loadUsers();
-}
-
-function hideModals() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.style.display = 'none';
-    });
-}
-
-function updateUI() {
-    const loginBtn = document.getElementById('login-btn');
-    const registerBtn = document.getElementById('register-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const userInfo = document.getElementById('user-info');
-    const createProductBtn = document.getElementById('create-product-btn');
-    const adminPanelBtn = document.getElementById('admin-panel-btn');
-
-    if (currentUser) {
-        loginBtn.style.display = 'none';
-        registerBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-        userInfo.style.display = 'inline-block';
-        userInfo.textContent = `${currentUser.full_name} (${currentUser.role})`;
-
-        createProductBtn.style.display = 'inline-block';
-
-        if (currentUser.role === 'admin') {
-            adminPanelBtn.style.display = 'inline-block';
-        } else {
-            adminPanelBtn.style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'none';
-            document.getElementById('products-container').style.display = 'block';
-        }
-    } else {
-        loginBtn.style.display = 'inline-block';
-        registerBtn.style.display = 'inline-block';
-        logoutBtn.style.display = 'none';
-        userInfo.style.display = 'none';
-        createProductBtn.style.display = 'none';
-        adminPanelBtn.style.display = 'none';
-    }
-}
-
-async function loadServerInfo() {
-    try {
-        const response = await fetch(`${API_BASE}/api/info`);
-        const info = await response.json();
-        console.log(`Server running with ${info.database_type} database`);
-    } catch (error) {
-        console.error('Failed to load server info:', error);
-    }
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadServerInfo();
+    // Загружаем пользователя
     await loadCurrentUser();
-    updateUI();
-    loadProducts();
 
-    // Login form
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const email = e.target[0].value;
-        const password = e.target[1].value;
-        login(email, password);
-    });
-
-    // Register form
-    document.getElementById('register-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const fullName = e.target[0].value;
-        const email = e.target[1].value;
-        const password = e.target[2].value;
-        register(fullName, email, password);
-    });
-
-    // Create product form
-    document.getElementById('create-product-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append('name', e.target[0].value);
-        formData.append('description', e.target[1].value);
-
-        const imagesInput = document.getElementById('product-images');
-        const videosInput = document.getElementById('product-videos');
-
-        for (let i = 0; i < imagesInput.files.length; i++) {
-            formData.append('images', imagesInput.files[i]);
-        }
-
-        for (let i = 0; i < videosInput.files.length; i++) {
-            formData.append('videos', videosInput.files[i]);
-        }
-
-        createProduct(formData);
-    });
-
-
-});
-
-// Close modals when clicking outside
-window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal')) {
-        hideModals();
+    // Если пользователь авторизован и на странице входа/регистрации - редирект
+    if (currentUser && (window.location.pathname.includes('login.html') ||
+                        window.location.pathname.includes('register.html'))) {
+        console.log("✅ User already authenticated, redirecting to dashboard");
+        showMessage(`Вы уже вошли как ${currentUser.full_name}`, 'success');
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
     }
+}
+
+// Инициализация форм входа/регистрации
+function initializeAuthForms() {
+    console.log("📝 Initializing auth forms...");
+
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    if (loginForm) {
+        console.log("✅ Found login form");
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Вход...';
+            submitBtn.disabled = true;
+
+            await loginUser(email, password);
+
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+
+    if (registerForm) {
+        console.log("✅ Found register form");
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const fullName = formData.get('full_name');
+            const email = formData.get('email');
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirm_password');
+
+            if (password !== confirmPassword) {
+                showMessage('Пароли не совпадают', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('Пароль должен быть не менее 6 символов', 'error');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Регистрация...';
+            submitBtn.disabled = true;
+
+            await registerUser(fullName, email, password);
+
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+}
+
+// Главная инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("=== PAGE LOADED ===");
+    console.log("Current page:", window.location.pathname);
+
+    // 1. Сначала инициализируем формы (если есть)
+    initializeAuthForms();
+
+    // 2. Проверяем доступ к защищенным страницам
+    const hasAccess = await checkProtectedPageAccess();
+
+    // 3. Если доступ есть или страница не защищенная - загружаем пользователя и обновляем навигацию
+    if (hasAccess || !window.location.pathname.includes('dashboard.html')) {
+        await loadCurrentUser();
+        updateNavigation();
+    }
+
+    // 4. Проверяем редиректы для уже авторизованных
+    await checkAuthRedirect();
 });
+
+// Глобальные функции
+window.logout = logout;
+window.showMessage = showMessage;

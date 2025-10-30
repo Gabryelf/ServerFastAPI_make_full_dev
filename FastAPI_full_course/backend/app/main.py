@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 from typing import List
 import os
 import uuid
+from pathlib import Path
 
 from .database import get_db, init_db
 from . import schemas
 from .auth import get_current_user, authenticate_user
 from .crud import get_user_by_email, create_user, get_products, get_product, create_product, update_product, \
     delete_product, make_user_admin, delete_user
-from .models import User
+from .models import User, Product
 from .config import settings
 
 # Initialize database
@@ -35,21 +36,15 @@ os.makedirs("app/static/uploads", exist_ok=True)
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# Определяем пути к фронтенду
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
 
-# Serve frontend
-@app.get("/")
-async def read_index():
-    return FileResponse('D:/FastAPI_full_course/frontend/index.html')
-
-
-@app.get("/{path:path}")
-async def serve_frontend(path: str):
-    frontend_path = f"frontend/{path}"
-    if os.path.exists(frontend_path):
-        return FileResponse(frontend_path)
-    return FileResponse('frontend/index.html')
+print(f"Frontend directory: {FRONTEND_DIR}")
+print(f"Frontend exists: {FRONTEND_DIR.exists()}")
 
 
+# API routes - должны быть ДО catch-all маршрута
 @app.get("/api/info")
 async def get_server_info():
     return {
@@ -61,10 +56,26 @@ async def get_server_info():
 # Auth routes
 @app.post("/api/register", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return create_user(db=db, user=user)
+    try:
+        print(f"=== REGISTRATION REQUEST ===")
+        print(f"Email: {user.email}")
+        print(f"Full name: {user.full_name}")
+
+        db_user = get_user_by_email(db, email=user.email)
+        if db_user:
+            print("❌ User already exists")
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+        print("✅ Creating new user...")
+        new_user = create_user(db=db, user=user)
+        print(f"✅ User created successfully: {new_user.email}")
+        return new_user
+
+    except Exception as e:
+        print(f"❌ Registration error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/api/login")
@@ -215,6 +226,98 @@ def delete_user(
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
 
     return delete_user(db=db, user_id=user_id)
+
+
+# Admin routes
+@app.get("/api/admin/users")
+def get_all_users(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    users = db.query(User).all()
+    return users
+
+
+@app.get("/api/admin/stats")
+def get_admin_stats(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    total_users = db.query(User).count()
+    total_products = db.query(Product).count()
+    total_admins = db.query(User).filter(User.role == "admin").count()
+
+    return {
+        "total_users": total_users,
+        "total_products": total_products,
+        "total_admins": total_admins
+    }
+
+
+# Debug endpoint
+@app.get("/api/debug/db-check")
+def debug_db_check(db: Session = Depends(get_db)):
+    """Проверка подключения к базе данных"""
+    try:
+        from sqlalchemy import text
+        # Проверяем подключение
+        result = db.execute(text("SELECT 1"))
+        db_check = result.scalar()
+
+        # Проверяем таблицы
+        result = db.execute(text("SHOW TABLES"))
+        tables = [table[0] for table in result.fetchall()]
+
+        # Проверяем пользователей
+        users_count = db.query(User).count()
+
+        return {
+            "database_connection": "✅ OK" if db_check == 1 else "❌ FAILED",
+            "tables": tables,
+            "users_count": users_count,
+            "database_url": settings.database_url
+        }
+    except Exception as e:
+        return {
+            "database_connection": "❌ FAILED",
+            "error": str(e)
+        }
+
+
+# Serve frontend - ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ
+@app.get("/")
+async def read_index():
+    index_path = FRONTEND_DIR / "index.html"
+    print(f"Serving index from: {index_path}")
+    return FileResponse(str(index_path))
+
+
+@app.get("/{path:path}")
+async def serve_frontend(path: str):
+    # Сначала проверяем, не является ли путь API маршрутом
+    if path.startswith('api/'):
+        # Если это API маршрут, который не был обработан выше, возвращаем 404
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    # Пытаемся найти файл во фронтенде
+    frontend_path = FRONTEND_DIR / path
+
+    print(f"Looking for: {frontend_path}")
+    print(f"Exists: {frontend_path.exists()}")
+
+    if frontend_path.exists() and frontend_path.is_file():
+        print(f"Serving: {frontend_path}")
+        return FileResponse(str(frontend_path))
+
+    # Для SPA маршрутов возвращаем index.html
+    print(f"SPA route, serving index.html for: {path}")
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 
 if __name__ == "__main__":
