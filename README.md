@@ -31,12 +31,6 @@
 
 ## 🎬 Demo Preview
 
-<div align="center">
-
-![Marketplace Flow](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Marketplace+Application+Demo)
-
-</div>
-
 ## 🚀 Quick Start
 
 ### Prerequisites
