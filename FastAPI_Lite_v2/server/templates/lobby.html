@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Лобби - Marketplace{% endblock %}
+
+{% block content %}
+<div class="lobby-container">
+    <div class="hero-section">
+        <h1>Добро пожаловать в Marketplace!</h1>
+        <p>Платформа для покупки и продажи товаров</p>
+        <div class="cta-buttons">
+            <a href="/register" class="btn btn-primary">Присоединиться</a>
+            <a href="/products" class="btn btn-secondary">Посмотреть товары</a>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <h3>🛒 Покупайте</h3>
+            <p>Найдите уникальные товары от продавцов</p>
+        </div>
+        <div class="feature-card">
+            <h3>💰 Продавайте</h3>
+            <p>Размещайте свои товары для продажи</p>
+        </div>
+        <div class="feature-card">
+            <h3>🔒 Безопасно</h3>
+            <p>Надежные транзакции и защита данных</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

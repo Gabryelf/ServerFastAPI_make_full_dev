@@ -1,0 +1,36 @@
+1 . python -m venv marketplace_env
+
+2 . pip install fastapi uvicorn jinja2 python-multipart
+
+3 . server / main / config
+
+4 . client / main
+
+5 . server / static /
+
+6 . server / main + client # 2
+
+7 . server / templates / base.html / lobby.html
+
+8 . server / static / css / style.css
+
+9 . cd server / uvicorn main:app --reload --host 0.0.0.0 --port 8001
+
+10 . server / database / base.py / mysql_adapter.py # 3
+
+11 . server / models / user.py
+
+12 . server / repositories / user_repository
+
+13 . server / templates / login.html / register.html
+
+14 . server / static / js / auth.js / css / style.css + # 4
+
+15 . server / config +
+
+16 . tests / +++
+
+17 . server / utils / data_utils.py
+
+18 . requirements.txt + # 5
+
