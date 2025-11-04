@@ -1,0 +1,120 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.auth-section, .product-form, .products-section, .orders-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+input, textarea, button, select {
+    padding: 10px;
+    margin: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 200px;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.product {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+.product h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+.role-badge {
+    background: #28a745;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.role-badge.seller {
+    background: #ffc107;
+    color: black;
+}
+
+.role-badge.admin {
+    background: #dc3545;
+}
+
+.error {
+    color: #dc3545;
+    margin: 5px;
+    font-size: 14px;
+}
+
+.success {
+    color: #28a745;
+    margin: 5px;
+    font-size: 14px;
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.order-item {
+    background: #e9ecef;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+}
