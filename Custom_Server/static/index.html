@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Marketplace</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .auth-section, .product-form, .products-section, .orders-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input, textarea, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .product {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        .role-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 Simple Marketplace</h1>
+            <div id="userInfo" class="hidden">
+                Привет, <span id="username"></span><span id="userRole" class="role-badge"></span>
+                <button onclick="logout()">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Авторизация -->
+        <div id="authSection" class="auth-section">
+            <h2>Вход / Регистрация</h2>
+            <div>
+                <input type="text" id="loginUsername" placeholder="Логин">
+                <input type="password" id="loginPassword" placeholder="ПаролЬ">
+                <button onclick="login()">Войти</button>
+            </div>
+            <div style="margin-top: 10px;">
+                <input type="text" id="regUsername" placeholder="Логин">
+                <input type="password" id="regPassword" placeholder="ПаролЬ">
+                <select id="regRole">
+                    <option value="customer">Покупатель</option>
+                    <option value="seller">Продавец</option>
+                </select>
+                <button onclick="register()">Зарегистрироваться</button>
+            </div>
+        </div>
+
+        <!-- Добавление товара (для продавцов) -->
+        <div id="productForm" class="product-form hidden">
+            <h2>Добавить товар</h2>
+            <input type="text" id="productName" placeholder="Название товара">
+            <input type="number" id="productPrice" placeholder="Цена" step="0.01">
+            <textarea id="productDesc" placeholder="Описание" style="width: 300px;"></textarea>
+            <button onclick="addProduct()">Добавить товар</button>
+        </div>
+
+        <!-- Список товаров -->
+        <div class="products-section">
+            <h2>Товары</h2>
+            <button onclick="loadProducts()">Обновить список</button>
+            <div id="productsList"></div>
+        </div>
+
+        <!-- Мои заказы -->
+        <div id="ordersSection" class="orders-section hidden">
+            <h2>Мои заказы</h2>
+            <button onclick="loadMyOrders()">Обновить заказы</button>
+            <div id="ordersList"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Авторизация
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/products', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(username + ':' + password)
+                    }
+                });
+
+                if (response.ok) {
+                    currentUser = { username, password };
+                    showUserInfo(username);
+                    loadProducts();
+                    checkUserRole();
+                } else {
+                    alert('Ошибка авторизации');
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error);
+            }
+        }
+
+        // Регистрация
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+
+            try {
+                const response = await fetch(`/register?username=${username}&password=${password}&role=${role}`);
+                if (response.ok) {
+                    alert('Регистрация успешна! Теперь войдите в систему.');
+                } else {
+                    alert('Ошибка регистрации');
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error);
+            }
+        }
+
+        // Выход
+        function logout() {
+            currentUser = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('productForm').classList.add('hidden');
+            document.getElementById('ordersSection').classList.add('hidden');
+        }
+
+        // Показать информацию о пользователе
+        function showUserInfo(username) {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('username').textContent = username;
+        }
+
+        // Проверить роль пользователя
+        async function checkUserRole() {
+            try {
+                const response = await fetch('/products', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(currentUser.username + ':' + currentUser.password)
+                    }
+                });
+
+                if (response.ok) {
+                    const products = await response.json();
+                    // В реальном приложении нужно получить роль из API
+                    document.getElementById('userRole').textContent = 'user';
+                    document.getElementById('ordersSection').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error checking role:', error);
+            }
+        }
+
+        // Загрузить товары
+        async function loadProducts() {
+            try {
+                const response = await fetch('/products');
+                const products = await response.json();
+
+                const productsList = document.getElementById('productsList');
+                productsList.innerHTML = '';
+
+                products.forEach(product => {
+                    const productDiv = document.createElement('div');
+                    productDiv.className = 'product';
+                    productDiv.innerHTML = `
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <p><strong>Цена: ${product.price} руб.</strong></p>
+                        ${currentUser ? `<button onclick="buyProduct(${product.id})">Купить</button>` : ''}
+                    `;
+                    productsList.appendChild(productDiv);
+                });
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        // Купить товар
+        async function buyProduct(productId) {
+            if (!currentUser) {
+                alert('Сначала войдите в систему');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/buy/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(currentUser.username + ':' + currentUser.password)
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Товар куплен успешно!');
+                    loadMyOrders();
+                } else {
+                    alert('Ошибка при покупке');
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error);
+            }
+        }
+
+        // Добавить товар
+        async function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const description = document.getElementById('productDesc').value;
+
+            try {
+                const response = await fetch(`/products?name=${name}&price=${price}&description=${description}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(currentUser.username + ':' + currentUser.password)
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Товар добавлен!');
+                    loadProducts();
+                } else {
+                    alert('Ошибка при добавлении товара');
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error);
+            }
+        }
+
+        // Загрузить мои заказы
+        async function loadMyOrders() {
+            try {
+                const response = await fetch('/my-orders', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(currentUser.username + ':' + currentUser.password)
+                    }
+                });
+
+                if (response.ok) {
+                    const orders = await response.json();
+                    const ordersList = document.getElementById('ordersList');
+                    ordersList.innerHTML = '';
+
+                    orders.forEach(order => {
+                        const orderDiv = document.createElement('div');
+                        orderDiv.className = 'product';
+                        orderDiv.innerHTML = `
+                            <p><strong>Заказ #${order.id}</strong></p>
+                            <p>Товар ID: ${order.product_id}</p>
+                            <p>Статус: ${order.status}</p>
+                        `;
+                        ordersList.appendChild(orderDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+
+        // Загрузить товары при загрузке страницы
+        loadProducts();
+    </script>
+</body>
+</html>
