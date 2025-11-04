@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Marketplace</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛒 Marketplace</h1>
+            <div id="userInfo" class="hidden">
+                Привет, <span id="username"></span><span id="userRole" class="role-badge"></span>
+                <button onclick="AuthService.logout()">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Auth Section -->
+        <div id="authSection" class="auth-section">
+            <h2>Вход / Регистрация</h2>
+            <div id="loginSection">
+                <h3>Вход</h3>
+                <input type="text" id="loginUsername" placeholder="Логин" value="seller1">
+                <input type="password" id="loginPassword" placeholder="Пароль" value="123">
+                <button onclick="AuthService.login()">Войти</button>
+                <div id="loginError" class="error"></div>
+            </div>
+            <div style="margin-top: 20px;">
+                <h3>Регистрация</h3>
+                <input type="text" id="regUsername" placeholder="Логин">
+                <input type="password" id="regPassword" placeholder="Пароль">
+                <select id="regRole">
+                    <option value="customer">Покупатель</option>
+                    <option value="seller">Продавец</option>
+                </select>
+                <button onclick="AuthService.register()">Зарегистрироваться</button>
+                <div id="regError" class="error"></div>
+                <div id="regSuccess" class="success"></div>
+            </div>
+        </div>
+
+        <!-- Product Form (for sellers) -->
+        <div id="productForm" class="product-form hidden">
+            <h2>Добавить товар</h2>
+            <input type="text" id="productName" placeholder="Название товара">
+            <input type="number" id="productPrice" placeholder="Цена" step="0.01">
+            <textarea id="productDesc" placeholder="Описание" style="width: 300px;"></textarea>
+            <button onclick="ProductsService.addProduct()">Добавить товар</button>
+            <div id="productMessage" class="success"></div>
+        </div>
+
+        <!-- Products List -->
+        <div class="products-section">
+            <h2>Товары</h2>
+            <button onclick="ProductsService.loadProducts()">Обновить список</button>
+            <div id="productsList"></div>
+        </div>
+
+        <!-- My Orders -->
+        <div id="ordersSection" class="orders-section hidden">
+            <h2>Мои заказы</h2>
+            <button onclick="OrdersService.loadMyOrders()">Обновить заказы</button>
+            <div id="ordersList"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="static/js/ui.js"></script>
+    <script src="static/js/auth.js"></script>
+    <script src="static/js/products.js"></script>
+    <script src="static/js/orders.js"></script>
+    <script src="static/js/app.js"></script>
+</body>
+</html>
