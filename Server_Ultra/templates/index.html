@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FastAPI Demo</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 FastAPI Demo</h1>
+        <p>Простая демонстрация CRUD операций</p>
+
+        <!-- Форма для создания пользователя -->
+        <div class="section">
+            <h2>➕ Создать пользователя</h2>
+            <form id="createForm">
+                <input type="text" name="name" placeholder="Имя" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <button type="submit">Создать</button>
+            </form>
+        </div>
+
+        <!-- Получить всех пользователей -->
+        <div class="section">
+            <h2>📊 Все пользователи</h2>
+            <button onclick="getAllUsers()">Показать всех</button>
+            <div id="usersList"></div>
+        </div>
+
+        <!-- Получить пользователя по ID -->
+        <div class="section">
+            <h2>🔍 Найти по ID</h2>
+            <input type="number" id="searchId" placeholder="ID пользователя">
+            <button onclick="getUserById()">Найти</button>
+            <div id="userResult"></div>
+        </div>
+
+        <!-- Обновить пользователя -->
+        <div class="section">
+            <h2>✏️ Обновить пользователя</h2>
+            <form id="updateForm">
+                <input type="number" name="id" placeholder="ID" required>
+                <input type="text" name="name" placeholder="Новое имя" required>
+                <input type="email" name="email" placeholder="Новый email" required>
+                <button type="submit">Обновить</button>
+            </form>
+        </div>
+
+        <!-- Удалить пользователя -->
+        <div class="section">
+            <h2>🗑️ Удалить пользователя</h2>
+            <input type="number" id="deleteId" placeholder="ID для удаления">
+            <button onclick="deleteUser()">Удалить</button>
+            <div id="deleteResult"></div>
+        </div>
+
+        <!-- Лог действий -->
+        <div class="section">
+            <h2>📝 Лог действий</h2>
+            <div id="actionLog"></div>
+        </div>
+    </div>
+
+    <script>
+    const API_BASE = "http://localhost:8000";
+
+    // Логирование действий
+    function logAction(message) {
+        const log = document.getElementById('actionLog');
+        const timestamp = new Date().toLocaleTimeString();
+        log.innerHTML = `<div class="log-entry">[${timestamp}] ${message}</div>` + log.innerHTML;
+    }
+
+    // Создать пользователя
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const user = {
+            name: formData.get('name'),
+            email: formData.get('email')
+        };
+
+        console.log('Отправка данных:', user); // Для отладки
+
+        try {
+            const response = await fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(user)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Ответ сервера:', result); // Для отладки
+            logAction(`✅ Создан пользователь: ${result.name} (ID: ${result.id})`);
+            e.target.reset();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            logAction(`❌ Ошибка создания: ${error.message}`);
+        }
+    });
+
+    // Получить всех пользователей
+    async function getAllUsers() {
+        try {
+            const response = await fetch(`${API_BASE}/users`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const users = await response.json();
+            const list = document.getElementById('usersList');
+            list.innerHTML = users.map(user =>
+                `<div class="user-card">ID: ${user.id} | ${user.name} | ${user.email}</div>`
+            ).join('');
+            logAction(`📊 Загружено ${users.length} пользователей`);
+        } catch (error) {
+            console.error('Ошибка:', error);
+            logAction(`❌ Ошибка загрузки: ${error.message}`);
+        }
+    }
+
+    // Найти пользователя по ID
+    async function getUserById() {
+        const id = document.getElementById('searchId').value;
+        if (!id) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/users/${id}`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Пользователь не найден');
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const user = await response.json();
+            document.getElementById('userResult').innerHTML =
+                `<div class="user-card">Найден: ${user.name} | ${user.email}</div>`;
+            logAction(`🔍 Найден пользователь ID: ${id}`);
+        } catch (error) {
+            document.getElementById('userResult').innerHTML =
+                `<div class="error">❌ ${error.message}</div>`;
+            logAction(`❌ Ошибка поиска ID ${id}: ${error.message}`);
+        }
+    }
+
+    // Обновить пользователя
+    document.getElementById('updateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const user = {
+            name: formData.get('name'),
+            email: formData.get('email')
+        };
+        const id = formData.get('id');
+
+        try {
+            const response = await fetch(`${API_BASE}/users/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(user)
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Пользователь не найден');
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            logAction(`✏️ Обновлен пользователь ID: ${id}`);
+            e.target.reset();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            logAction(`❌ Ошибка обновления: ${error.message}`);
+        }
+    });
+
+    // Удалить пользователя
+    async function deleteUser() {
+        const id = document.getElementById('deleteId').value;
+        if (!id) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/users/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Пользователь не найден');
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            document.getElementById('deleteResult').innerHTML =
+                `<div class="success">✅ ${result.message}</div>`;
+            logAction(`🗑️ Удален пользователь ID: ${id}`);
+        } catch (error) {
+            document.getElementById('deleteResult').innerHTML =
+                `<div class="error">❌ ${error.message}</div>`;
+            logAction(`❌ Ошибка удаления: ${error.message}`);
+        }
+    }
+
+    // Добавляем обработчик для favicon чтобы избежать 404 ошибок
+    document.addEventListener('DOMContentLoaded', function() {
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.href = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>';
+        document.head.appendChild(link);
+    });
+</script>
+</body>
+</html>
